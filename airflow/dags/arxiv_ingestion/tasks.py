@@ -118,7 +118,7 @@ def fetch_daily_papers(**context):
         results = asyncio.run(
             run_paper_ingestion_pipeline(
                 target_date=target_date,
-                max_results=10,
+                max_results=20,
                 process_pdfs=True,
             )
         )

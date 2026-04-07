@@ -391,6 +391,6 @@ def make_metadata_fetcher(
         arxiv_client=arxiv_client,
         pdf_parser=pdf_parser,
         pdf_cache_dir=pdf_cache_dir,
-        max_concurrent_downloads=5,
-        max_concurrent_parsing=1,
+        max_concurrent_downloads=3,
+        max_concurrent_parsing=2,
     )
