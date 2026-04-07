@@ -14,7 +14,7 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=/app/uv.lock \
     --mount=type=bind,source=pyproject.toml,target=/app/pyproject.toml \
-    uv sync --frozen --no-dev --extra docling
+    uv sync --frozen --no-dev
 
 # Copy source code
 COPY src /app/src

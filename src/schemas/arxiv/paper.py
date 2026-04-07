@@ -23,7 +23,7 @@ class PaperBase(BaseModel):
     title:str = Field(..., description="The title of the paper.")
     abstract:str = Field(..., description="The abstract of the paper.")
     authors:List[str] = Field(..., description="The authors of the paper.")
-    published_date:str = Field(..., description="The published date of the paper.")
+    published_date:datetime = Field(..., description="The published date of the paper.")
     pdf_url:str = Field(..., description="The PDF URL of the paper.")
     categories:List[str] = Field(..., description="The categories of the paper.")
 

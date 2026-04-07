@@ -10,7 +10,7 @@ from src.db.interface.postgresql import Base
 class Paper(Base):
     __tablename__ = "papers"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    arxive_id = Column(String, nullable=False, unique=True, index=True)
+    arxiv_id = Column(String, nullable=False, unique=True, index=True)
     title = Column(String, nullable=False)
     abstract = Column(Text, nullable=False)
     authors = Column(JSON, nullable=False)

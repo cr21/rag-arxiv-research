@@ -1,9 +1,8 @@
 [project]
-name = "rag-arxiv-research"
+name = "moai-zero-to-rag"
 version = "0.1.0"
-description = "RAG on arxiv research paper"
-readme = "README.md"
-requires-python = ">=3.12, <3.13"
+description = "Mother-of-AI Phase-1-Zero to RAG"
+requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi[standard]>=0.115.12",
     "uvicorn>=0.34.0",
@@ -15,17 +14,10 @@ dependencies = [
     "opensearch-py>=3.0.0",
     "requests>=2.32.3",
     "httpx>=0.28.1",
-    # Parsing stack without the full `docling` metapackage (that pulls torch; no macOS x86_64 wheels).
-    "docling-core>=2.43.0",
-    "docling-parse>=4.1.0",
-    "pypdfium2>=4.30.0",
+    "docling>=2.43.0",
     "python-dateutil>=2.9.0.post0",
 ]
-
-[project.optional-dependencies]
-# Full Docling API (`docling.document_converter`, etc.); install on Linux/ARM or in Docker — not on Intel macOS via PyPI wheels.
-docling = ["docling>=2.43.0"]
-
+readme = "README.md"
 
 [dependency-groups]
 dev = [
@@ -63,9 +55,5 @@ env_files = ".env.test"
 [tool.mypy]
 explicit_package_bases = true
 ignore_errors = true
-
-[tool.pyright]
-stubPath = "typings"
-reportMissingModuleSource = false
 
 
