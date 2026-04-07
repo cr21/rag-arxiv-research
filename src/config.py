@@ -11,6 +11,31 @@ class DefaultSettings(BaseSettings):
     )
     
 
+class ArxivSettings(BaseSettings):
+    """
+    Arxive API Client Settings
+    """
+    base_url: str = "https://export.arxiv.org/api/query"
+    namespace: dict = Field(default={
+        "atom": "http://www.w3.org/2005/Atom",
+        "opensearch": "http://a9.com/-/spec/opensearch/1.1/",
+        "arxiv": "http://arxiv.org/schemas/atom"
+    })
+    pdf_cache_dir: str = "./data/arxiv_pdfs"
+    rate_limit_delay: float = 3.0
+    timeout_seconds: int = 30
+    max_results: int = 100
+    search_category: str = "cs.AI"
+
+class PDFParserSettings(BaseSettings):
+    """
+    PDF Parser Settings
+    """
+    max_pages: int = 20
+    max_file_size_mb: int = 20
+    do_ocr: bool = False
+    do_table_structure: bool = True
+
 class Settings(DefaultSettings):
     """
     Application settings.
@@ -36,6 +61,10 @@ class Settings(DefaultSettings):
     ollama_models: Union[str, List[str]] = Field(default = ['llama3.2:1b','gemma3:1b'])
     ollama_default_model:str = "gemma3:1b"
     ollama_timeout: int = 300
+
+    # ARXIV CONFIG
+    arxiv : ArxivSettings = Field(default_factory=ArxivSettings)
+    pdf_parser : PDFParserSettings = Field(default_factory=PDFParserSettings)
 
 
     @field_validator("ollama_models", mode="before")
