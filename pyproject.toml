@@ -5,17 +5,27 @@ description = "RAG on arxiv research paper"
 readme = "README.md"
 requires-python = ">=3.12, <3.13"
 dependencies = [
-    "alembic>=1.13.3",
     "fastapi[standard]>=0.115.12",
-    "httpx>=0.28.1",
-    "opensearch-py>=3.0.0",
-    "psycopg2-binary>=2.9.10",
+    "uvicorn>=0.34.0",
     "pydantic>=2.11.3",
     "pydantic-settings>=2.8.1",
-    "requests>=2.32.3",
     "sqlalchemy>=2.0.0",
-    "uvicorn>=0.34.0",
+    "psycopg2-binary>=2.9.10",
+    "alembic>=1.13.3",
+    "opensearch-py>=3.0.0",
+    "requests>=2.32.3",
+    "httpx>=0.28.1",
+    # Parsing stack without the full `docling` metapackage (that pulls torch; no macOS x86_64 wheels).
+    "docling-core>=2.43.0",
+    "docling-parse>=4.1.0",
+    "pypdfium2>=4.30.0",
+    "python-dateutil>=2.9.0.post0",
 ]
+
+[project.optional-dependencies]
+# Full Docling API (`docling.document_converter`, etc.); install on Linux/ARM or in Docker — not on Intel macOS via PyPI wheels.
+docling = ["docling>=2.43.0"]
+
 
 [dependency-groups]
 dev = [
@@ -50,8 +60,12 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 env_files = ".env.test"
 
-[tool.coverage.run]
-omit = [
-    "src/mock_llm_server.py",
-]
-testpaths = ["tests"]
+[tool.mypy]
+explicit_package_bases = true
+ignore_errors = true
+
+[tool.pyright]
+stubPath = "typings"
+reportMissingModuleSource = false
+
+

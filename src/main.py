@@ -7,6 +7,8 @@ from src.config import get_settings
 from src.db.factory import make_database
 from src.routers import ping, papers, ask
 # from src.routers import ask, paper, ping
+from src.services.arxiv.factory import make_arxiv_client
+from src.services.pdf_parser.factory import make_pdf_parser_service
 
 logging.basicConfig(
     level=logging.INFO,
@@ -29,10 +31,11 @@ async def lifespan(app: FastAPI):
     app.state.database = database
     logger.info("Database initialized")
 
+    app.state.arxiv_client = make_arxiv_client()
     app.state.llm_service = None
     app.state.opensearch_service = None
-    app.state.pdf_parser_service = None
-
+    app.state.pdf_parser = make_pdf_parser_service()
+    logger.info("Services initialized: arXiv API client, PDF parser")
     logger.info("API READY")
     yield
     logger.info("Shutting down... Cleaning up resources")
@@ -44,7 +47,7 @@ app = FastAPI(lifespan=lifespan,
     title="RAG on arxiv research paper",
     description="RAG on arxiv research paper",
     version=os.getenv("APP_VERSION", "0.1.0"),
-    root_path="/api/v1",
+    # root_path="/api/v1",
     contact={
         "name": "Chirag Tagadiya",
         "email": "cr.tagadiya@gmail.com",
@@ -53,9 +56,9 @@ app = FastAPI(lifespan=lifespan,
 
 
 # ADD ROUTERS
-app.include_router(ping.router)
-app.include_router(papers.router)
-app.include_router(ask.router)
+app.include_router(ping.router, prefix="/api/v1")
+app.include_router(papers.router, prefix="/api/v1")
+app.include_router(ask.router, prefix="/api/v1")
 
 
 if __name__ == "__main__":
