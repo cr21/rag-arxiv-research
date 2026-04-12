@@ -6,6 +6,9 @@ from fastapi import Depends, Request
 from sqlalchemy.orm import Session
 from src.config import Settings
 from src.db.interface.base import IBaseDatabase
+from src.services.opensearch.client import OpenSearchClient
+from src.services.pdf_parser.parser import PDFParserService
+from src.services.arxiv.client import ArxivClient
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
@@ -47,16 +50,26 @@ def get_llm_service(request: Request):
     """
     return None
 
-def get_opensearch_service(request: Request):
+def get_opensearch_client(request: Request):
     """
     Get Opensearch service instance from the request.
     """
-    return None
+    return request.app.state.opensearch_client
 
+def get_arxiv_client(request: Request) -> ArxivClient:
+    """Get arXiv client from the request state."""
+    return request.app.state.arxiv_client
+
+
+def get_pdf_parser(request: Request) -> PDFParserService:
+    """Get PDF parser service from the request state."""
+    return request.app.state.pdf_parser
+    
 # depedency type aliases
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 DatabaseDep = Annotated[IBaseDatabase, Depends(get_database)]
 SessionDep = Annotated[Session, Depends(get_db_session)]
-PdfParserServiceDep = Annotated[Any, Depends(get_pdf_parser_service)]
+ArxivDep = Annotated[ArxivClient, Depends(get_arxiv_client)]
+PDFParserDep = Annotated[PDFParserService, Depends(get_pdf_parser)]
 LLMServiceDep = Annotated[Any, Depends(get_llm_service)]
-OpensearchServiceDep = Annotated[Any, Depends(get_opensearch_service)]
+OpenSearchDep = Annotated[OpenSearchClient, Depends(get_opensearch_client)]

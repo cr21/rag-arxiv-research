@@ -6,10 +6,10 @@ from airflow.operators.python import PythonOperator
 
 # Import task functions from separate module
 from arxiv_ingestion.tasks import (
-    create_opensearch_placeholders,
     fetch_daily_papers,
     generate_daily_report,
     process_failed_pdfs,
+    index_papers_to_opensearch,
     setup_environment,
 )
 
@@ -56,8 +56,8 @@ retry_task = PythonOperator(
 )
 
 opensearch_task = PythonOperator(
-    task_id="create_opensearch_placeholders",
-    python_callable=create_opensearch_placeholders,
+    task_id="index_papers_to_opensearch",
+    python_callable=index_papers_to_opensearch,
     dag=dag,
 )
 
@@ -80,4 +80,4 @@ cleanup_task = BashOperator(
 
 # Task dependencies
 # Main pipeline: setup -> fetch -> (retry + opensearch) -> report -> cleanup
-setup_task >> fetch_task >> [retry_task, opensearch_task] >> report_task >> cleanup_task
+setup_task >> fetch_task >> opensearch_task >> report_task >> cleanup_task
