@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional
+from .health import ServiceStatus
 
 class ServiceStatus(BaseModel):
     """
@@ -17,7 +18,7 @@ class HealthResponse(BaseModel):
     version:str=Field(..., description="The version of the application.", example='0.1.0')
     environment:str=Field(..., description="The environment of the application.", example='development')
     service_name:str=Field(..., description="service identifier.", example='rag-api')
-    services:Dict[str, SearviceStatus]=Field(..., description="The status of the  Individual services.")
+    services:Dict[str, ServiceStatus]=Field(..., description="The status of the  Individual services.")
 
 
     class Config:
