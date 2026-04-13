@@ -49,7 +49,7 @@ services:
         soft: -1
         hard: -1
     volumes:
-      - opensearch_data:/usr/share/opensearch/data
+      - ./data/opensearch:/usr/share/opensearch/data
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
       interval: 30s
@@ -99,7 +99,8 @@ services:
       - OPENSEARCH_HOST=http://opensearch:9200
       - OPENSEARCH__HOST=http://opensearch:9200
       - OLLAMA_HOST=http://ollama:11434
-      - PYTHONPATH=/opt/airflow/src
+      # Parent of `src` so `import src....` resolves (/opt/airflow/src/...)
+      - PYTHONPATH=/opt/airflow
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - airflow_logs:/opt/airflow/logs
@@ -160,7 +161,6 @@ services:
 
 volumes:
   postgres_data:
-  opensearch_data:
   ollama_data:
   airflow_logs:
 

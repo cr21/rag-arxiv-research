@@ -4,9 +4,13 @@ import sys
 from datetime import datetime, timedelta
 from functools import lru_cache
 from typing import Any, Tuple
+
+# DAG parsing runs before task execution; ensure parent of `src` is on path.
+_airflow_root = "/opt/airflow"
+if _airflow_root not in sys.path:
+    sys.path.insert(0, _airflow_root)
+
 from src.repositories.paper import PaperRepository
-# Add project root to Python path for imports
-sys.path.insert(0, "/opt/airflow")
 
 # All imports at the top
 from sqlalchemy import text
@@ -58,7 +62,7 @@ async def run_paper_ingestion_pipeline(
     Returns:
         Dictionary with processing results
     """
-    _arxiv_client, _pdf_parser, database, metadata_fetcher = get_cached_services()
+    _arxiv_client, _pdf_parser, database, metadata_fetcher, _opensearch = get_cached_services()
 
     with database.get_session() as session:
         return await metadata_fetcher.fetch_and_process_papers(
@@ -77,7 +81,7 @@ def setup_environment():
 
     try:
         # Get cached services (initialized once)
-        arxiv_client, _pdf_parser, database, _metadata_fetcher , opensearch_client= get_cached_services()
+        arxiv_client, _pdf_parser, database, _metadata_fetcher, opensearch_client = get_cached_services()
 
         # Test database connection
         with database.get_session() as session:
@@ -166,7 +170,7 @@ def index_papers_to_opensearch(**context):
             return {"status": "skipped", "papers_indexed": 0, "message": "No papers available for indexing"}
         logger.info(f"Processing {papers_stored} papers for OpenSearch indexing")
         # Get all services 
-        _arxiv_client, _pdf_parser, database, _metadata_fetcher , opensearch_client= get_cached_services()
+        _arxiv_client, _pdf_parser, database, _metadata_fetcher, opensearch_client = get_cached_services()
         # check opensearch health
         if not opensearch_client.health_check():
             logger.error("OpenSearch is not healthy, skipping indexing")
@@ -177,13 +181,15 @@ def index_papers_to_opensearch(**context):
 
         with database.get_session() as session:
             paper_repo = PaperRepository(session)
+            limit_n = int(fetch_results.get("papers_stored", 0) or 0)
             query = f"""
-            select * from papers
-            where DATE(created_at = CURRENT_DATE 
+            SELECT * FROM papers
+            WHERE created_at::date = CURRENT_DATE
             ORDER BY created_at DESC
-            LIMIT {fetch_results.get("papers_stored", 0)} 
+            LIMIT {fetch_results.get("papers_stored", 0) if fetch_results else 100}
             """
-            result  = session.execute(text(query))
+            logger.info(f"Query: {query}")
+            result = session.execute(text(query))
             papers = result.fetchall()
             logger.info(f"Found {len(papers)} papers to index")
 
@@ -362,6 +368,7 @@ def generate_daily_report(**context):
                 "processing_time_seconds": fetch_results.get("processing_time", 0) if fetch_results else 0,
                 "errors": len(fetch_results.get("errors", [])) if fetch_results else 0,
                 "failed_pdf_retries": len(fetch_results.get("errors", [])) if fetch_results else 0,
+                "pdf_failures_skipped": fetch_results.get("pdf_failures_skipped", 0) if fetch_results else 0,
             },
             "opensearch": {
                 "papers_indexed": opensearch_results.get("papers_indexed", 0) if opensearch_results else 0,

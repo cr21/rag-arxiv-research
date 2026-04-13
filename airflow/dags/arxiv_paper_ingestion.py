@@ -49,11 +49,11 @@ fetch_task = PythonOperator(
     dag=dag,
 )
 
-retry_task = PythonOperator(
-    task_id="process_failed_pdfs",
-    python_callable=process_failed_pdfs,
-    dag=dag,
-)
+# retry_task = PythonOperator(
+#     task_id="process_failed_pdfs",
+#     python_callable=process_failed_pdfs,
+#     dag=dag,
+# )
 
 opensearch_task = PythonOperator(
     task_id="index_papers_to_opensearch",

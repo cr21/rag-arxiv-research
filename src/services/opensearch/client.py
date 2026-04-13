@@ -1,11 +1,10 @@
 from typing import Optional, Any, List, Dict
 from datetime import datetime, timezone
 import logging
-from src.config import Settings
 
 from opensearchpy import OpenSearch
 from opensearchpy.exceptions import NotFoundError, RequestError
-from src.config import get_settings, Settings
+from src.config import Settings, get_settings
 from .index_config import ARXIV_PAPERS_INDEX, ARXIV_PAPERS_MAPPING
 from .query_builder import PaperQueryBuilder
 
@@ -21,7 +20,10 @@ class OpenSearchClient:
                         settings: Optional[Settings]=None):
         self.host = host
         self.settings = settings
-        self.index_name = self.settings.opensearch_index_name or ARXIV_PAPERS_INDEX
+        if settings is not None and settings.opensearch.index_name:
+            self.index_name = settings.opensearch.index_name
+        else:
+            self.index_name = ARXIV_PAPERS_INDEX
         self.client  = OpenSearch(
             hosts=[self.host],
             http_compress=True,
@@ -256,6 +258,7 @@ class OpenSearchClient:
                 latest_papers=latest_papers,
             )
             search_query = query_builder.build()
+            logger.info(f"Search query: {search_query}")
             response = self.client.search(index=self.index_name, body=search_query)
             #Format results
             results = {"total": response["hits"]["total"]["value"], "hits": []}

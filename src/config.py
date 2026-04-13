@@ -1,20 +1,33 @@
 from typing import List, Union
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).parent.parent
+ENV_FILE_PATH = PROJECT_ROOT / ".env"
 
-
-class DefaultSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env",
+class BaseConfigSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=[".env", str(ENV_FILE_PATH)],
         extra="ignore",
         frozen=True,
         env_nested_delimiter="__",
+        case_sensitive=False,
     )
     
 
-class ArxivSettings(BaseSettings):
+class ArxivSettings(BaseConfigSettings):
     """
     Arxive API Client Settings
     """
+    model_config = SettingsConfigDict(
+        env_file=[".env", str(ENV_FILE_PATH)],
+        env_prefix="ARXIV__",
+        extra="ignore",
+        frozen=True,
+        case_sensitive=False,
+    )
+
     base_url: str = "https://export.arxiv.org/api/query"
     namespace: dict = Field(default={
         "atom": "http://www.w3.org/2005/Atom",
@@ -26,17 +39,50 @@ class ArxivSettings(BaseSettings):
     timeout_seconds: int = 30
     max_results: int = 100
     search_category: str = "cs.AI"
+    max_concurrent_downloads: int = 5
+    max_concurrent_parsing: int = 1
+    download_retry_delay_base: float = 5.0
+    download_max_retries: int = 3
 
-class PDFParserSettings(BaseSettings):
+    @field_validator("pdf_cache_dir")
+    @classmethod
+    def validate_cache_dir(cls, v: str) -> str:
+        os.makedirs(v, exist_ok=True)
+        return v
+
+class PDFParserSettings(BaseConfigSettings):
     """
     PDF Parser Settings
     """
+    model_config = SettingsConfigDict(
+        env_file=[".env", str(ENV_FILE_PATH)],
+        env_prefix="PDF_PARSER__",
+        extra="ignore",
+        frozen=True,
+        case_sensitive=False,
+    )
+
     max_pages: int = 20
     max_file_size_mb: int = 20
     do_ocr: bool = False
     do_table_structure: bool = True
 
-class Settings(DefaultSettings):
+class OpenSearchSettings(BaseConfigSettings):
+    model_config = SettingsConfigDict(
+        env_file=[".env", str(ENV_FILE_PATH)],
+        env_prefix="OPENSEARCH__",
+        extra="ignore",
+        frozen=True,
+        case_sensitive=False,
+    )
+
+    host: str = "http://localhost:9200"
+    index_name: str = "arxiv-papers"
+    max_text_size: int = 1000000
+
+
+
+class Settings(BaseConfigSettings):
     """
     Application settings.
     """
@@ -65,6 +111,7 @@ class Settings(DefaultSettings):
     # ARXIV CONFIG
     arxiv : ArxivSettings = Field(default_factory=ArxivSettings)
     pdf_parser : PDFParserSettings = Field(default_factory=PDFParserSettings)
+    opensearch: OpenSearchSettings = Field(default_factory=OpenSearchSettings)
 
 
     @field_validator("ollama_models", mode="before")
@@ -77,6 +124,12 @@ class Settings(DefaultSettings):
             return [model.strip() for model in v.split(",") if model.strip()]
         return v
 
+    @field_validator("postgres_database_url")
+    @classmethod
+    def validate_database_url(cls, v: str) -> str:
+        if not (v.startswith("postgresql://") or v.startswith("postgresql+psycopg2://")):
+            raise ValueError("Database URL must start with 'postgresql://' or 'postgresql+psycopg2://'")
+        return v
 
 def get_settings() -> Settings:
     """
