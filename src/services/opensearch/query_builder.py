@@ -89,7 +89,7 @@ class PaperQueryBuilder:
         if filter_clauses:
             bool_query["filter"] = filter_clauses
 
-        return bool_query
+        return {"bool": bool_query}
 
     def _build_text_search(self) -> Dict[str, Any]:
         """Build the main text search query.

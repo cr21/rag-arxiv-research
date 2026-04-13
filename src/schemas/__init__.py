@@ -1,10 +1,11 @@
-from .api.health import HealthResponse, SearviceStatus
+from .api.health import HealthResponse, ServiceStatus
 from .arxiv.paper import ArxivPaper, PaperBase, PaperCreate, PaperResponse, PaperSearchResponse
 from .pdf_parser.models import ParserType, PaperSection, PaperFigure, PaperTable, PdfContent, ArxivMetadata, ParsedPaper
+from .api.search import SearchHit, SearchRequest, SearchResponse
 
 __all__ = [
     "HealthResponse",
-    "SearviceStatus",
+    "ServiceStatus",
     "ArxivPaper",
     "PaperBase",
     "PaperCreate",
@@ -16,5 +17,8 @@ __all__ = [
     "PaperTable",
     "PdfContent",
     "ArxivMetadata",
-    "ParsedPaper"
+    "ParsedPaper",
+    "SearchRequest",
+    "SearchHit",
+    "SearchResponse",
 ]
