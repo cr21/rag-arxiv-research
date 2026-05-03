@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from src.config import Settings
 from src.db.interface.base import IBaseDatabase
 from src.services.opensearch.client import OpenSearchClient
+from src.services.embeddings.openai_client import OpenAIEmbeddingsClient
 from src.services.pdf_parser.parser import PDFParserService
 from src.services.arxiv.client import ArxivClient
 
@@ -64,7 +65,12 @@ def get_arxiv_client(request: Request) -> ArxivClient:
 def get_pdf_parser(request: Request) -> PDFParserService:
     """Get PDF parser service from the request state."""
     return request.app.state.pdf_parser
-    
+
+
+def get_embeddings_service(request: Request) -> OpenAIEmbeddingsClient:
+    """Get embeddings service from the request state."""
+    return request.app.state.embeddings_service
+
 # depedency type aliases
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 DatabaseDep = Annotated[IBaseDatabase, Depends(get_database)]
@@ -73,3 +79,4 @@ ArxivDep = Annotated[ArxivClient, Depends(get_arxiv_client)]
 PDFParserDep = Annotated[PDFParserService, Depends(get_pdf_parser)]
 LLMServiceDep = Annotated[Any, Depends(get_llm_service)]
 OpenSearchDep = Annotated[OpenSearchClient, Depends(get_opensearch_client)]
+EmbeddingsDep = Annotated[OpenAIEmbeddingsClient, Depends(get_embeddings_service)]

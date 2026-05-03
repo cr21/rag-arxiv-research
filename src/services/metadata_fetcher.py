@@ -6,6 +6,7 @@ from typing import List, Optional, Dict, Any
 
 from dateutil import parser as date_parser
 from sqlalchemy.orm import Session
+from src.config import Settings, get_settings
 from src.exceptions import MetadataFetchingException, PipelineException
 from src.repositories.paper import PaperRepository
 from src.schemas.arxiv.paper import ArxivPaper, PaperBase, PaperCreate, PaperResponse, PaperSearchResponse
@@ -33,6 +34,7 @@ class MetadataFetcher:
         pdf_cache_dir: Optional[Path] = None,
         max_concurrent_downloads: int = 5,
         max_concurrent_parsing: int = 3,
+        settings: Optional[Settings] = None,
     ):
         """
         Initialize metadata fetcher.
@@ -49,6 +51,7 @@ class MetadataFetcher:
         self.pdf_cache_dir = pdf_cache_dir or self.arxiv_client.pdf_cache_dir
         self.max_concurrent_downloads = max_concurrent_downloads
         self.max_concurrent_parsing = max_concurrent_parsing
+        self.settings = settings or get_settings()
 
     async def fetch_and_process_papers(
         self,
@@ -370,27 +373,31 @@ def make_metadata_fetcher(
     arxiv_client: ArxivClient,
     pdf_parser: PDFParserService,
     pdf_cache_dir: Optional[Path] = None,
+    settings: Optional[Settings] = None,
 ) -> MetadataFetcher:
+    """Create MetadataFetcher instance with configuration settings.
+
+    :param arxiv_client: Client for arXiv API operations
+    :param pdf_parser: Service for parsing PDF documents
+    :param pdf_cache_dir: Directory for caching downloaded PDFs
+    :param settings: Application settings instance (uses default if None)
+    :type arxiv_client: ArxivClient
+    :type pdf_parser: PDFParserService
+    :type pdf_cache_dir: Optional[Path]
+    :type settings: Optional[Settings]
+    :returns: Configured MetadataFetcher instance
+    :rtype: MetadataFetcher
     """
-    Factory function to create MetadataFetcher instance optimized for production.
+    from src.config import get_settings
 
-    Configured for typical production workloads (100 papers/day):
-    - 5 concurrent downloads (I/O bound, can handle more)
-    - 3 concurrent parsing operations (CPU intensive, use fewer)
-    - Async pipeline for optimal resource utilization
+    if settings is None:
+        settings = get_settings()
 
-    Args:
-        arxiv_client: Configured ArxivClient
-        pdf_parser: Configured PDFParserService (singleton with model caching)
-        pdf_cache_dir: Optional PDF cache directory
-
-    Returns:
-        MetadataFetcher instance optimized for production
-    """
     return MetadataFetcher(
         arxiv_client=arxiv_client,
         pdf_parser=pdf_parser,
         pdf_cache_dir=pdf_cache_dir,
-        max_concurrent_downloads=3,
-        max_concurrent_parsing=2,
+        max_concurrent_downloads=settings.arxiv.max_concurrent_downloads,
+        max_concurrent_parsing=settings.arxiv.max_concurrent_parsing,
+        settings=settings,
     )

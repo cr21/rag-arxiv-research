@@ -37,7 +37,7 @@ class ArxivSettings(BaseConfigSettings):
     pdf_cache_dir: str = "./data/arxiv_pdfs"
     rate_limit_delay: float = 3.0
     timeout_seconds: int = 30
-    max_results: int = 100
+    max_results: int = 25
     search_category: str = "cs.AI"
     max_concurrent_downloads: int = 5
     max_concurrent_parsing: int = 1
@@ -67,6 +67,19 @@ class PDFParserSettings(BaseConfigSettings):
     do_ocr: bool = False
     do_table_structure: bool = True
 
+class ChunkingSettings(BaseConfigSettings):
+    model_config = SettingsConfigDict(
+        env_file=[".env", str(ENV_FILE_PATH)],
+        env_prefix="CHUNKING__",
+        extra="ignore",
+        frozen=True,
+        case_sensitive=False,
+    )
+    chunk_size: int = 600 # Target words per document chunk
+    overlap_size: int = 100 # Overlapping words between chunks
+    min_chunk_size: int = 100 # Minimum words per chunk
+    section_based: bool = True # Whether to use section-based chunking
+    
 class OpenSearchSettings(BaseConfigSettings):
     model_config = SettingsConfigDict(
         env_file=[".env", str(ENV_FILE_PATH)],
@@ -79,6 +92,15 @@ class OpenSearchSettings(BaseConfigSettings):
     host: str = "http://localhost:9200"
     index_name: str = "arxiv-papers"
     max_text_size: int = 1000000
+    chunk_index_suffix: str = "chunks"
+
+    # Vectorsearch settings
+    vector_dimensions: int = 1536
+    vector_space_type: str = 'cosinesiml' # cosinesiml, l2, innerproduct
+
+    #Hybrid search settings
+    rrf_pipeline_name:str = 'hybrid-rrf-pipeline'
+    hybrid_search_size_multiplier: int = 2  # Get k*multiplier for better recall
 
 
 
@@ -112,8 +134,10 @@ class Settings(BaseConfigSettings):
     arxiv : ArxivSettings = Field(default_factory=ArxivSettings)
     pdf_parser : PDFParserSettings = Field(default_factory=PDFParserSettings)
     opensearch: OpenSearchSettings = Field(default_factory=OpenSearchSettings)
+    chunking: ChunkingSettings = Field(default_factory=ChunkingSettings)
 
-
+    # OPENAI API CONFIG
+    openai_api_key: str = ""
     @field_validator("ollama_models", mode="before")
     @classmethod
     def parse_ollama_models(cls, v):

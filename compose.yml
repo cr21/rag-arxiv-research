@@ -88,6 +88,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Same secrets/config as API (OPENAI_API_KEY, etc.); tasks use get_settings() from env vars.
+    env_file:
+      - .env
     environment:
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://rag_user:rag_password@postgres:5432/rag_db
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
