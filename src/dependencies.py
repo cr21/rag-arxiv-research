@@ -10,6 +10,7 @@ from src.services.opensearch.client import OpenSearchClient
 from src.services.embeddings.openai_client import OpenAIEmbeddingsClient
 from src.services.pdf_parser.parser import PDFParserService
 from src.services.arxiv.client import ArxivClient
+from src.services.ollama.client import OllamaClient
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
@@ -71,6 +72,11 @@ def get_embeddings_service(request: Request) -> OpenAIEmbeddingsClient:
     """Get embeddings service from the request state."""
     return request.app.state.embeddings_service
 
+
+def get_ollama_client(request: Request) -> OllamaClient:
+    """Get Ollama client from the request state."""
+    return request.app.state.ollama_client
+
 # depedency type aliases
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 DatabaseDep = Annotated[IBaseDatabase, Depends(get_database)]
@@ -80,3 +86,4 @@ PDFParserDep = Annotated[PDFParserService, Depends(get_pdf_parser)]
 LLMServiceDep = Annotated[Any, Depends(get_llm_service)]
 OpenSearchDep = Annotated[OpenSearchClient, Depends(get_opensearch_client)]
 EmbeddingsDep = Annotated[OpenAIEmbeddingsClient, Depends(get_embeddings_service)]
+OllamaDep = Annotated[OllamaClient, Depends(get_ollama_client)]

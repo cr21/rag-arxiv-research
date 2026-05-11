@@ -6,7 +6,6 @@ from src.schemas.api.search import SearchResponse, SearchHit, HybridSearchReques
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/hybrid-search", tags=["Hybrid Search"])
 
-
 @router.post("/", response_model=SearchResponse)
 async def hybrid_search(
     request: HybridSearchRequest, opensearch_client: OpenSearchDep, embeddings_service: EmbeddingsDep

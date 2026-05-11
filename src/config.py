@@ -126,6 +126,7 @@ class Settings(BaseConfigSettings):
 
     # OLLAMA CONFIG
     ollama_host:str = "http://localhost:11434"
+    ollama_model:str = "gemma3:1b"
     ollama_models: Union[str, List[str]] = Field(default = ['llama3.2:1b','gemma3:1b'])
     ollama_default_model:str = "gemma3:1b"
     ollama_timeout: int = 300

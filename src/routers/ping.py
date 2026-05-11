@@ -1,8 +1,7 @@
 from fastapi import APIRouter
 from sqlalchemy import text
 
-from ..services.ollama import OllamaClient
-from ..dependencies import DatabaseDep, SettingsDep, OpenSearchDep
+from ..dependencies import DatabaseDep, SettingsDep, OpenSearchDep, OllamaDep
 from ..schemas.api.health import HealthResponse, ServiceStatus
 
 router = APIRouter()
@@ -23,7 +22,12 @@ summary="Health check endpoint",
 description="Check the health and status of the API service including database connectivity.",
 response_description="Service health information",
 )
-async def health_check(settings:SettingsDep, database:DatabaseDep, opensearch_client:OpenSearchDep):
+async def health_check(
+    settings: SettingsDep,
+    database: DatabaseDep,
+    opensearch_client: OpenSearchDep,
+    ollama_client: OllamaDep,
+):
     """
     Comprehensive health check endpoint for monitoring and load balancer probes.
 
@@ -60,7 +64,7 @@ async def health_check(settings:SettingsDep, database:DatabaseDep, opensearch_cl
                 return check_func(*args)
             result = check_func(*args)
             services[name] = result
-            if result.status != "healthy" or result.status != "ok":
+            if result.status not in ("healthy", "ok"):
                 nonlocal overall_status
                 overall_status = "degraded"
         except Exception as e:
@@ -85,17 +89,18 @@ async def health_check(settings:SettingsDep, database:DatabaseDep, opensearch_cl
 
     #Test ollama connectivity
     try:
-        ollam_client = OllamaClient(settings)
-        ollama_health = await ollam_client.health_check()
-        services['ollama'] = ollama_health
-        if ollama_health['status'] == 'ok':
-            services['ollama'] = ServiceStatus(status=ollama_health['status'], message=ollama_health['message'])
+        ollama_health = await ollama_client.health_check()
+        if ollama_health.get("status") in ("healthy", "ok"):
+            services["ollama"] = ServiceStatus(status="healthy", message=ollama_health.get("message", "Ollama ok"))
         else:
-            overall_status='degraded'
-            services['ollama'] = ServiceStatus(status='unhealthy', message= f"Ollama connectivity failed: {ollama_health['message']}")
+            overall_status = "degraded"
+            services["ollama"] = ServiceStatus(
+                status="unhealthy",
+                message=f"Ollama connectivity failed: {ollama_health.get('message', 'unknown error')}",
+            )
     except Exception as e:
-        overall_status='degraded'
-        services['ollama'] = ServiceStatus(status='unhealthy', message= f"Ollama connectivity failed: {e}")
+        overall_status = "degraded"
+        services["ollama"] = ServiceStatus(status="unhealthy", message=f"Ollama connectivity failed: {e}")
     return HealthResponse(
         status=overall_status,
         version=settings.app_version,
